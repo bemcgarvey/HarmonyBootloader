@@ -3,10 +3,11 @@
 #include <QSettings>
 #include <QFileDialog>
 #include <QCloseEvent>
+#include <QMessageBox>
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
-    , ui(new Ui::MainWindow)
+    , ui(new Ui::MainWindow), usbLink(new BootLoaderUSBLink())
 {
     QSettings settings;
     ui->setupUi(this);
@@ -15,7 +16,7 @@ MainWindow::MainWindow(QWidget *parent)
     ui->fileNameEdit->setText(settings.value("last_file", "").toString());
     ui->baudComboBox->setCurrentIndex(settings.value("last_baud", 0).toInt());
     ui->connectionTypeComboBox->setCurrentIndex(settings.value("last_connection_type", 0).toInt());
-    connectLabel = new QLabel("Connected to:");
+    connectLabel = new QLabel("Not connected");
     ui->statusbar->addWidget(connectLabel);
 }
 
@@ -61,3 +62,39 @@ void MainWindow::closeEvent(QCloseEvent *event)
     settings.setValue("last_connection_type", ui->connectionTypeComboBox->currentIndex());
     event->accept();
 }
+
+void MainWindow::on_connectButton_clicked()
+{
+    if (ui->connectionTypeComboBox->currentText() == "USB") {
+        usbLink->Close();
+        bool ok = false;
+        uint16_t vid = ui->vidEdit->text().toInt(&ok, 16);
+        if (!ok) {
+            QMessageBox::critical(this, QApplication::applicationName(), "Invalid vid - Enter in hex");
+            return;
+        }
+        uint16_t pid = ui->pidEdit->text().toInt(&ok, 16);
+        if (!ok) {
+            QMessageBox::critical(this, QApplication::applicationName(), "Invalid pid - Enter in hex");
+            return;
+        }
+        usbLink->Open(pid, vid);
+        if (usbLink->Connected()) {
+            connectLabel->setText(QString("Connected: VID = %1 PID = %2")
+                                  .arg(ui->vidEdit->text(), ui->pidEdit->text()));
+            ui->programButton->setEnabled(true);
+            ui->verifyButton->setEnabled(true);
+            bootloader = std::make_unique<HidBootloader>(HidBootloader(*usbLink));
+            int version = bootloader->getHardwareVersion();
+            connectLabel->setText(QString("Connected: VID = %1 PID = %2 Bootloader Version = %3.%4")
+                                  .arg(ui->vidEdit->text(), ui->pidEdit->text())
+                                  .arg(version >> 8).arg(version & 0xff));
+        } else {
+            connectLabel->setText("Not connected");
+            ui->programButton->setEnabled(false);
+            ui->verifyButton->setEnabled(false);
+            QMessageBox::critical(this, QApplication::applicationName(), "Unable to open device");
+        }
+    }
+}
+

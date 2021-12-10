@@ -9,20 +9,25 @@ CONFIG += c++11
 #DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x060000    # disables all the APIs deprecated before Qt 6.0.0
 
 SOURCES += \
+    bootloaderusblink.cpp \
+    hidbootloader.cpp \
     main.cpp \
     mainwindow.cpp
 
 HEADERS += \
+    bootloaderusblink.h \
+    hidbootloader.h \
     mainwindow.h
 
 FORMS += \
     mainwindow.ui
+
+LIBS += -lhid
+LIBS += -lsetupapi
+LIBS += -luser32
 
 # Default rules for deployment.
 qnx: target.path = /tmp/$${TARGET}/bin
 else: unix:!android: target.path = /opt/$${TARGET}/bin
 !isEmpty(target.path): INSTALLS += target
 
-win32: LIBS += -lhid
-win32: LIBS += -lsetupapi
-win32: LIBS += -luser32
