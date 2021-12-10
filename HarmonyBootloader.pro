@@ -9,12 +9,14 @@ CONFIG += c++11
 #DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x060000    # disables all the APIs deprecated before Qt 6.0.0
 
 SOURCES += \
+    bootloader.cpp \
     bootloaderusblink.cpp \
     hidbootloader.cpp \
     main.cpp \
     mainwindow.cpp
 
 HEADERS += \
+    bootloader.h \
     bootloaderusblink.h \
     hidbootloader.h \
     mainwindow.h

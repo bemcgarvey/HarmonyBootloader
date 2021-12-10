@@ -4,10 +4,11 @@
 #include <QFileDialog>
 #include <QCloseEvent>
 #include <QMessageBox>
+#include "hidbootloader.h"
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
-    , ui(new Ui::MainWindow), usbLink(new BootLoaderUSBLink())
+    , ui(new Ui::MainWindow), bootloader(nullptr)
 {
     QSettings settings;
     ui->setupUi(this);
@@ -23,6 +24,9 @@ MainWindow::MainWindow(QWidget *parent)
 MainWindow::~MainWindow()
 {
     delete ui;
+    if (bootloader) {
+        delete bootloader;
+    }
 }
 
 
@@ -66,7 +70,6 @@ void MainWindow::closeEvent(QCloseEvent *event)
 void MainWindow::on_connectButton_clicked()
 {
     if (ui->connectionTypeComboBox->currentText() == "USB") {
-        usbLink->Close();
         bool ok = false;
         uint16_t vid = ui->vidEdit->text().toInt(&ok, 16);
         if (!ok) {
@@ -78,13 +81,14 @@ void MainWindow::on_connectButton_clicked()
             QMessageBox::critical(this, QApplication::applicationName(), "Invalid pid - Enter in hex");
             return;
         }
-        usbLink->Open(pid, vid);
-        if (usbLink->Connected()) {
+        if (bootloader) {
+            delete bootloader;
+        }
+        bootloader = new HidBootloader(vid, pid);
+        if (bootloader->isConnected()) {
             connectLabel->setText(QString("Connected: VID = %1 PID = %2")
                                   .arg(ui->vidEdit->text(), ui->pidEdit->text()));
             ui->programButton->setEnabled(true);
-            ui->verifyButton->setEnabled(true);
-            bootloader = std::make_unique<HidBootloader>(HidBootloader(*usbLink));
             int version = bootloader->getHardwareVersion();
             connectLabel->setText(QString("Connected: VID = %1 PID = %2 Bootloader Version = %3.%4")
                                   .arg(ui->vidEdit->text(), ui->pidEdit->text())
@@ -92,8 +96,9 @@ void MainWindow::on_connectButton_clicked()
         } else {
             connectLabel->setText("Not connected");
             ui->programButton->setEnabled(false);
-            ui->verifyButton->setEnabled(false);
-            QMessageBox::critical(this, QApplication::applicationName(), "Unable to open device");
+            QMessageBox::critical(this, QApplication::applicationName()
+                                  , QString("Unable to open device with vid=%1, pid=%2")
+                                    .arg(ui->vidEdit->text(), ui->pidEdit->text()));
         }
     }
 }
