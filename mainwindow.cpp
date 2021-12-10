@@ -86,10 +86,13 @@ void MainWindow::on_connectButton_clicked()
         }
         bootloader = new HidBootloader(vid, pid);
         if (bootloader->isConnected()) {
+            connect(bootloader, &Bootloader::message, this, &MainWindow::onMessage);
+            connect(bootloader, &Bootloader::progress, this, &MainWindow::onProgress);
+            connect(bootloader, &Bootloader::finished, this, &MainWindow::onBootloaderFinished);
             connectLabel->setText(QString("Connected: VID = %1 PID = %2")
                                   .arg(ui->vidEdit->text(), ui->pidEdit->text()));
             ui->programButton->setEnabled(true);
-            int version = bootloader->getHardwareVersion();
+            int version = bootloader->readBootInfo();
             connectLabel->setText(QString("Connected: VID = %1 PID = %2 Bootloader Version = %3.%4")
                                   .arg(ui->vidEdit->text(), ui->pidEdit->text())
                                   .arg(version >> 8).arg(version & 0xff));
@@ -99,6 +102,40 @@ void MainWindow::on_connectButton_clicked()
             QMessageBox::critical(this, QApplication::applicationName()
                                   , QString("Unable to open device with vid=%1, pid=%2")
                                     .arg(ui->vidEdit->text(), ui->pidEdit->text()));
+        }
+    }
+}
+
+void MainWindow::onMessage(QString msg)
+{
+    ui->statusbar->showMessage(msg, 1000);
+}
+
+void MainWindow::onProgress(int progress)
+{
+    ui->progressBar->setValue(progress);
+}
+
+void MainWindow::onBootloaderFinished()
+{
+
+}
+
+
+void MainWindow::on_programButton_clicked()
+{
+    if (!bootloader->setFile(ui->fileNameEdit->text())) {
+        QMessageBox::critical(this, QApplication::applicationName()
+                              , "Unable to open firmware file.  "
+                                "Make sure the file exists and is "
+                                "the correct type");
+        return;
+    }
+    ui->progressBar->setValue(0);
+    //TODO move this to a new thread
+    if (bootloader->eraseFlash()) {
+        if (bootloader->programFlash()) {
+            bootloader->jumpToApp();
         }
     }
 }

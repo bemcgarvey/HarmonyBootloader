@@ -20,6 +20,10 @@ private slots:
     void on_connectionTypeComboBox_currentTextChanged(const QString &arg1);
     void on_browseButton_clicked();
     void on_connectButton_clicked();
+    void onMessage(QString msg);
+    void onProgress(int progress);
+    void onBootloaderFinished();
+    void on_programButton_clicked();
 
 private:
     QString fileName;

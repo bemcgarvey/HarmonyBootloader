@@ -4,6 +4,7 @@
 #include "bootloaderusblink.h"
 #include "bootloader.h"
 #include <memory>
+#include <QFile>
 
 
 
@@ -14,10 +15,10 @@ public:
     ~HidBootloader() {};
     virtual bool isConnected() override;
     virtual bool setFile(QString fileName) override;
-    virtual int getHardwareVersion() override;
-    virtual bool eraseDevice() override;
-    virtual bool programDevice() override;
-    virtual uint16_t getCRC() override;
+    virtual int readBootInfo() override;
+    virtual bool eraseFlash() override;
+    virtual bool programFlash() override;
+    virtual uint16_t readCRC() override;
     virtual void jumpToApp() override;
 private:
     enum {READ_BOOT_INFO = 1, ERASE_FLASH, PROGRAM_FLASH, READ_CRC, JMP_TO_APP};
@@ -29,6 +30,9 @@ private:
     int bufferLen;
     int processedLen;
     std::unique_ptr<BootLoaderUSBLink> m_link;
+    std::unique_ptr<QFile> m_hexFile;
+    bool parseHexRecord(char *hexRec);
+    uint8_t hexCharToInt(char c);
 };
 
 #endif // HIDBOOTLOADER_H

@@ -10,11 +10,11 @@ public:
     Bootloader();
     virtual ~Bootloader() = 0;
     virtual bool isConnected() = 0;
-    virtual int getHardwareVersion(void) = 0;
+    virtual int readBootInfo() = 0;
     virtual bool setFile(QString fileName) = 0;
-    virtual bool eraseDevice() = 0;
-    virtual bool programDevice() = 0;
-    virtual uint16_t getCRC() = 0;
+    virtual bool eraseFlash() = 0;
+    virtual bool programFlash() = 0;
+    virtual uint16_t readCRC() = 0;
     virtual void jumpToApp() = 0;
     virtual void abort();
     virtual bool isIdle();
