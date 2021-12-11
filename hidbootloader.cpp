@@ -22,7 +22,7 @@ int HidBootloader::readBootInfo()
     bufferLen = 64;
     bufferLen = processInput();
     if (bufferLen != 3) {
-        return 0;
+        version = 0;
     } else {
         version = (processedBuffer[1] << 8) + processedBuffer[2];
     }
@@ -63,7 +63,6 @@ bool HidBootloader::eraseFlash()
     }
 }
 
-#include <QDebug>
 bool HidBootloader::programFlash()
 {
     if (!m_hexFile) {
@@ -80,7 +79,11 @@ bool HidBootloader::programFlash()
     }
     m_hexFile->reset();
     int currentLine = 0;
+    emit message("Programming flash");
     while (m_hexFile->readLine(lineBuffer, 512) > 0) {
+        if (m_abort) {
+            return false;
+        }
         if (parseHexRecord(lineBuffer)) {
             int len = processOutput();
             m_link->WriteDevice(processedBuffer, len);
@@ -95,14 +98,13 @@ bool HidBootloader::programFlash()
         emit progress((currentLine * 100) / lineCount);
     }
     emit progress(100);
-    emit message("Programming complete");
     emit finished();
     return true;
 }
 
 uint16_t HidBootloader::readCRC()
 {
-
+    return 0;
 }
 
 void HidBootloader::jumpToApp()

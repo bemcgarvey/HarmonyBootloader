@@ -1,6 +1,6 @@
 #include "bootloader.h"
 
-Bootloader::Bootloader() : m_abort(false), m_isIdle(true)
+Bootloader::Bootloader() : m_abort(false)
 {
 
 }
@@ -12,11 +12,6 @@ Bootloader::~Bootloader() {
 void Bootloader::abort()
 {
     m_abort = true;
-}
-
-bool Bootloader::isIdle()
-{
-    return m_isIdle;
 }
 
 uint16_t Bootloader::calculateCRC(uint8_t *data, uint32_t len)

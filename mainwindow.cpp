@@ -62,6 +62,19 @@ void MainWindow::on_browseButton_clicked()
 
 void MainWindow::closeEvent(QCloseEvent *event)
 {
+    if (worker) {
+        if (worker->isRunning()) {
+            if (QMessageBox::warning(this, QApplication::applicationName(),
+                                     "Programming in progress.  Are you sure you want to terminate"
+                                     " the programming?", QMessageBox::Yes | QMessageBox::Cancel)
+                    == QMessageBox::Cancel) {
+                event->ignore();
+                return;
+            }
+            bootloader->abort();
+            worker->wait();
+        }
+    }
     QSettings settings;
     settings.setValue("last_vid", ui->vidEdit->text());
     settings.setValue("last_pid", ui->pidEdit->text());
@@ -112,7 +125,7 @@ void MainWindow::on_connectButton_clicked()
 
 void MainWindow::onMessage(QString msg)
 {
-    ui->statusbar->showMessage(msg, 1000);
+    ui->statusbar->showMessage(msg, 0);
 }
 
 void MainWindow::onProgress(int progress)
@@ -128,6 +141,7 @@ void MainWindow::onBootloaderFinished()
         delete worker;
         worker = nullptr;
     }
+    ui->statusbar->showMessage("Programming completed", 2000);
 }
 
 
