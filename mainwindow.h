@@ -4,6 +4,7 @@
 #include <QMainWindow>
 #include <QLabel>
 #include "bootloader.h"
+#include "workerthread.h"
 #include <memory>
 
 QT_BEGIN_NAMESPACE
@@ -30,6 +31,7 @@ private:
     QLabel *connectLabel;
     Ui::MainWindow *ui;
     Bootloader *bootloader;
+    WorkerThread *worker;
 protected:
     virtual void closeEvent(QCloseEvent *event) override;
 };

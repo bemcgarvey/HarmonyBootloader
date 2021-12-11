@@ -5,10 +5,11 @@
 #include <QCloseEvent>
 #include <QMessageBox>
 #include "hidbootloader.h"
+#include "workerthread.h"
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
-    , ui(new Ui::MainWindow), bootloader(nullptr)
+    , ui(new Ui::MainWindow), bootloader(nullptr), worker(nullptr)
 {
     QSettings settings;
     ui->setupUi(this);
@@ -26,6 +27,9 @@ MainWindow::~MainWindow()
     delete ui;
     if (bootloader) {
         delete bootloader;
+    }
+    if (worker) {
+        delete worker;
     }
 }
 
@@ -118,12 +122,18 @@ void MainWindow::onProgress(int progress)
 
 void MainWindow::onBootloaderFinished()
 {
-
+    ui->programButton->setEnabled(true);
+    if (worker) {
+        worker->wait();
+        delete worker;
+        worker = nullptr;
+    }
 }
 
 
 void MainWindow::on_programButton_clicked()
 {
+    ui->programButton->setEnabled(false);
     if (!bootloader->setFile(ui->fileNameEdit->text())) {
         QMessageBox::critical(this, QApplication::applicationName()
                               , "Unable to open firmware file.  "
@@ -132,11 +142,7 @@ void MainWindow::on_programButton_clicked()
         return;
     }
     ui->progressBar->setValue(0);
-    //TODO move this to a new thread
-    if (bootloader->eraseFlash()) {
-        if (bootloader->programFlash()) {
-            bootloader->jumpToApp();
-        }
-    }
+    worker = new WorkerThread(bootloader);
+    worker->start();
 }
 

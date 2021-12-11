@@ -13,13 +13,15 @@ SOURCES += \
     bootloaderusblink.cpp \
     hidbootloader.cpp \
     main.cpp \
-    mainwindow.cpp
+    mainwindow.cpp \
+    workerthread.cpp
 
 HEADERS += \
     bootloader.h \
     bootloaderusblink.h \
     hidbootloader.h \
-    mainwindow.h
+    mainwindow.h \
+    workerthread.h
 
 FORMS += \
     mainwindow.ui
