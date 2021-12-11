@@ -22,7 +22,7 @@ protected:
     virtual uint16_t calculateCRC(uint8_t *data, uint32_t len);
     bool m_abort;
 signals:
-    void finished();
+    void finished(bool success);
     void progress(int p);
     void message(QString m);
 };

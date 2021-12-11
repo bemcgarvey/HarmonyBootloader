@@ -15,7 +15,10 @@ MainWindow::MainWindow(QWidget *parent)
     ui->setupUi(this);
     ui->vidEdit->setText(settings.value("last_vid", "0x4d63").toString());
     ui->pidEdit->setText(settings.value("last_pid", "0x1234").toString());
-    ui->fileNameEdit->setText(settings.value("last_file", "").toString());
+    std::unique_ptr<QFile> test(new QFile(settings.value("last_file", "").toString()));
+    if (test->exists()) {
+        ui->fileNameEdit->setText(settings.value("last_file", "").toString());
+    }
     ui->baudComboBox->setCurrentIndex(settings.value("last_baud", 0).toInt());
     ui->connectionTypeComboBox->setCurrentIndex(settings.value("last_connection_type", 0).toInt());
     connectLabel = new QLabel("Not connected");
@@ -52,7 +55,14 @@ void MainWindow::on_connectionTypeComboBox_currentTextChanged(const QString &arg
 
 void MainWindow::on_browseButton_clicked()
 {
-    fileName = QFileDialog::getOpenFileName(this, "Open hex/bin file", "", "bin/hex files (*.hex *.bin)");
+    QString filter;
+    if (ui->connectionTypeComboBox->currentText() == "USB") {
+        filter = "hex files (*.hex)";
+    } else if (ui->connectionTypeComboBox->currentText() == "UART"){
+        filter = "bin files (*.bin)";
+    }
+
+    fileName = QFileDialog::getOpenFileName(this, "Open firmware file", "", filter);
     if (fileName != "") {
         ui->fileNameEdit->setText(fileName);
     }
@@ -133,15 +143,20 @@ void MainWindow::onProgress(int progress)
     ui->progressBar->setValue(progress);
 }
 
-void MainWindow::onBootloaderFinished()
+void MainWindow::onBootloaderFinished(bool success)
 {
-    ui->programButton->setEnabled(true);
     if (worker) {
         worker->wait();
         delete worker;
         worker = nullptr;
     }
-    ui->statusbar->showMessage("Programming completed", 2000);
+    if (success) {
+        ui->statusbar->showMessage("Programming completed", 0);
+        connectLabel->setText("Not Connected");
+    } else {
+        ui->programButton->setEnabled(true);
+        ui->statusbar->showMessage("Programming failed", 0);
+    }
 }
 
 
@@ -158,5 +173,17 @@ void MainWindow::on_programButton_clicked()
     ui->progressBar->setValue(0);
     worker = new WorkerThread(bootloader);
     worker->start();
+}
+
+
+void MainWindow::on_actionExit_triggered()
+{
+    close();
+}
+
+
+void MainWindow::on_actionOpen_hex_file_triggered()
+{
+    on_browseButton_clicked();
 }
 

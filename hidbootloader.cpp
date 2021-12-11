@@ -55,6 +55,7 @@ bool HidBootloader::eraseFlash()
     bufferLen = 64;
     bufferLen = processInput();
     if (bufferLen != 1 || processedBuffer[0] != ERASE_FLASH) {
+        emit finished(false);
         return false;
     } else {
         emit message("Device Erased");
@@ -82,6 +83,7 @@ bool HidBootloader::programFlash()
     emit message("Programming flash");
     while (m_hexFile->readLine(lineBuffer, 512) > 0) {
         if (m_abort) {
+            emit finished(false);
             return false;
         }
         if (parseHexRecord(lineBuffer)) {
@@ -91,6 +93,7 @@ bool HidBootloader::programFlash()
             bufferLen = 64;
             bufferLen = processInput();
             if (bufferLen != 1 || processedBuffer[0] != PROGRAM_FLASH) {
+                emit finished(false);
                 return false;
             }
         }
@@ -98,7 +101,7 @@ bool HidBootloader::programFlash()
         emit progress((currentLine * 100) / lineCount);
     }
     emit progress(100);
-    emit finished();
+    emit finished(true);
     return true;
 }
 

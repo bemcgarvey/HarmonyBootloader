@@ -23,8 +23,12 @@ private slots:
     void on_connectButton_clicked();
     void onMessage(QString msg);
     void onProgress(int progress);
-    void onBootloaderFinished();
+    void onBootloaderFinished(bool success);
     void on_programButton_clicked();
+
+    void on_actionExit_triggered();
+
+    void on_actionOpen_hex_file_triggered();
 
 private:
     QString fileName;
