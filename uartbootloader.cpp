@@ -42,7 +42,6 @@ bool UARTBootloader::eraseFlash()
     return true;
 }
 
-#include <QDebug>
 bool UARTBootloader::programFlash()
 {
     emit message("Programming flash");
@@ -68,11 +67,16 @@ bool UARTBootloader::programFlash()
     m_port->setStopBits(QSerialPort::OneStop);
     m_connected = m_port->open(QIODevice::ReadWrite);
     if (!m_connected) {
+        emit finished(false);
         return false;
     }
     uint32_t currentAddress = m_flashStart;
     char result;
     while (currentBlock < blocks) {
+        if (m_abort) {
+            emit finished(false);
+            return false;
+        }
         m_txHeader.size = 8;
         m_txHeader.command = BL_CMD_UNLOCK;
         m_port->write(m_txHeader.bytes, 9);
@@ -82,12 +86,12 @@ bool UARTBootloader::programFlash()
         m_port->flush();
         m_port->waitForReadyRead(1000);
         if (m_port->bytesAvailable() < 1) {
-            qDebug() << "unlock timeout";
+            emit finished(false);
             return false;
         }
         m_port->read(&result, 1);
         if (result != BL_RESP_OK) {
-            qDebug() << "unlock=" << (int)result;
+            emit finished(false);
             return false;
         }
         data[0] = currentAddress;
@@ -103,15 +107,13 @@ bool UARTBootloader::programFlash()
         m_port->flush();
         m_port->waitForReadyRead(1000);
         if (m_port->bytesAvailable() < 1) {
-            qDebug() << "data timeout";
+            emit finished(false);
             return false;
         }
         m_port->read(&result, 1);
         if (result != BL_RESP_OK) {
-            qDebug() << "data=" << (int)result;
+            emit finished(false);
             return false;
-        } else {
-            qDebug() << "Block:" << currentBlock;
         }
         ++currentBlock;
         currentAddress += m_eraseBlockSize;
@@ -136,12 +138,10 @@ void UARTBootloader::jumpToApp()
     char result = 0;
     m_port->waitForReadyRead(1000);
     if (m_port->bytesAvailable() < 1) {
-        qDebug() << "reset timeout";
+        emit finished(false);
+        return;
     }
     m_port->read(&result, 1);
-    if (result != BL_RESP_OK) {
-        qDebug() << "reset" << (int)result;
-    }
     m_port->close();
     emit finished(true);
 }
