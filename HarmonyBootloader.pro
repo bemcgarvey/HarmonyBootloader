@@ -1,4 +1,4 @@
-QT       += core gui
+QT       += core gui serialport
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
@@ -14,6 +14,7 @@ SOURCES += \
     hidbootloader.cpp \
     main.cpp \
     mainwindow.cpp \
+    uartbootloader.cpp \
     workerthread.cpp
 
 HEADERS += \
@@ -21,6 +22,7 @@ HEADERS += \
     bootloaderusblink.h \
     hidbootloader.h \
     mainwindow.h \
+    uartbootloader.h \
     workerthread.h
 
 FORMS += \

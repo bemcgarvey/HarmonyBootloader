@@ -5,7 +5,9 @@
 #include <QCloseEvent>
 #include <QMessageBox>
 #include "hidbootloader.h"
+#include "uartbootloader.h"
 #include "workerthread.h"
+#include <QtSerialPort/QSerialPortInfo>
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -28,11 +30,11 @@ MainWindow::MainWindow(QWidget *parent)
 MainWindow::~MainWindow()
 {
     delete ui;
-    if (bootloader) {
-        delete bootloader;
-    }
     if (worker) {
         delete worker;
+    }
+    if (bootloader) {
+        delete bootloader;
     }
 }
 
@@ -49,6 +51,11 @@ void MainWindow::on_connectionTypeComboBox_currentTextChanged(const QString &arg
         ui->vidEdit->setEnabled(false);
         ui->portComboBox->setEnabled(true);
         ui->baudComboBox->setEnabled(true);
+        QList<QSerialPortInfo> portList = QSerialPortInfo::availablePorts();
+        ui->portComboBox->clear();
+        for (auto&& i : portList) {
+            ui->portComboBox->addItem(i.portName());
+        }
     }
 }
 
@@ -61,7 +68,6 @@ void MainWindow::on_browseButton_clicked()
     } else if (ui->connectionTypeComboBox->currentText() == "UART"){
         filter = "bin files (*.bin)";
     }
-
     fileName = QFileDialog::getOpenFileName(this, "Open firmware file", "", filter);
     if (fileName != "") {
         ui->fileNameEdit->setText(fileName);
@@ -96,6 +102,8 @@ void MainWindow::closeEvent(QCloseEvent *event)
 
 void MainWindow::on_connectButton_clicked()
 {
+    ui->statusbar->clearMessage();
+    ui->progressBar->setValue(0);
     if (ui->connectionTypeComboBox->currentText() == "USB") {
         bool ok = false;
         uint16_t vid = ui->vidEdit->text().toInt(&ok, 16);
@@ -116,8 +124,6 @@ void MainWindow::on_connectButton_clicked()
             connect(bootloader, &Bootloader::message, this, &MainWindow::onMessage);
             connect(bootloader, &Bootloader::progress, this, &MainWindow::onProgress);
             connect(bootloader, &Bootloader::finished, this, &MainWindow::onBootloaderFinished);
-            connectLabel->setText(QString("Connected: VID = %1 PID = %2")
-                                  .arg(ui->vidEdit->text(), ui->pidEdit->text()));
             ui->programButton->setEnabled(true);
             int version = bootloader->readBootInfo();
             connectLabel->setText(QString("Connected: VID = %1 PID = %2 Bootloader Version = %3.%4")
@@ -129,6 +135,26 @@ void MainWindow::on_connectButton_clicked()
             QMessageBox::critical(this, QApplication::applicationName()
                                   , QString("Unable to open device with vid=%1, pid=%2")
                                     .arg(ui->vidEdit->text(), ui->pidEdit->text()));
+        }
+    } else if (ui->connectionTypeComboBox->currentText() == "UART") {
+        if (bootloader) {
+            delete bootloader;
+        }
+        int baud = ui->baudComboBox->currentText().toInt();
+        bootloader = new UARTBootloader(ui->portComboBox->currentText(), baud);
+        if (bootloader->isConnected()) {
+            connect(bootloader, &Bootloader::message, this, &MainWindow::onMessage);
+            connect(bootloader, &Bootloader::progress, this, &MainWindow::onProgress);
+            connect(bootloader, &Bootloader::finished, this, &MainWindow::onBootloaderFinished);
+            connectLabel->setText(QString("Connected: %1 %2 baud")
+                                  .arg(ui->portComboBox->currentText()).arg(baud));
+            ui->programButton->setEnabled(true);
+        } else {
+            connectLabel->setText("Not connected");
+            ui->programButton->setEnabled(false);
+            QMessageBox::critical(this, QApplication::applicationName()
+                                  , QString("Unable to open port: %1")
+                                  .arg(ui->portComboBox->currentText()));
         }
     }
 }
@@ -168,6 +194,7 @@ void MainWindow::on_programButton_clicked()
                               , "Unable to open firmware file.  "
                                 "Make sure the file exists and is "
                                 "the correct type");
+        ui->programButton->setEnabled(true);
         return;
     }
     ui->progressBar->setValue(0);
