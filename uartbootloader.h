@@ -17,7 +17,7 @@ typedef union {
 class UARTBootloader : public Bootloader
 {
 public:
-    UARTBootloader(QString portName, int baud);
+    UARTBootloader(QString portName, int baud, uint32_t startAddress, uint16_t eraseBlockSize);
     virtual bool isConnected() override;
     virtual int readBootInfo() override;
     virtual bool setFile(QString fileName) override;

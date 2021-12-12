@@ -1,10 +1,9 @@
 #include "uartbootloader.h"
 
-UARTBootloader::UARTBootloader(QString portName, int baud) :
-    Bootloader(), m_portName(portName), m_baud(baud), m_connected(false)
+UARTBootloader::UARTBootloader(QString portName, int baud, uint32_t startAddress, uint16_t eraseBlockSize) :
+    Bootloader(), m_portName(portName), m_baud(baud)
+  , m_connected(false), m_flashStart(startAddress), m_eraseBlockSize(eraseBlockSize)
 {
-    m_flashStart = 0x402000;
-    m_eraseBlockSize = 8192;
     m_txHeader.guard = BTL_GUARD;
     if (m_portName != "") {
         m_connected = true;

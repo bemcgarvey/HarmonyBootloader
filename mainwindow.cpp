@@ -23,6 +23,10 @@ MainWindow::MainWindow(QWidget *parent)
     }
     ui->baudComboBox->setCurrentIndex(settings.value("last_baud", 0).toInt());
     ui->connectionTypeComboBox->setCurrentIndex(settings.value("last_connection_type", 0).toInt());
+    ui->eraseBlockSizeComboBox->setCurrentText(
+                settings.value("last_erase_block_size", "8192").toString());
+    ui->startAddressComboBox->setCurrentText(
+                settings.value("last_start_address", "0x402000").toString());
     connectLabel = new QLabel("Not connected");
     ui->statusbar->addWidget(connectLabel);
 }
@@ -46,11 +50,15 @@ void MainWindow::on_connectionTypeComboBox_currentTextChanged(const QString &arg
         ui->vidEdit->setEnabled(true);
         ui->portComboBox->setEnabled(false);
         ui->baudComboBox->setEnabled(false);
+        ui->startAddressComboBox->setEnabled(false);
+        ui->eraseBlockSizeComboBox->setEnabled(false);
     } else if (arg1 == "UART") {
         ui->pidEdit->setEnabled(false);
         ui->vidEdit->setEnabled(false);
         ui->portComboBox->setEnabled(true);
         ui->baudComboBox->setEnabled(true);
+        ui->startAddressComboBox->setEnabled(true);
+        ui->eraseBlockSizeComboBox->setEnabled(true);
         QList<QSerialPortInfo> portList = QSerialPortInfo::availablePorts();
         ui->portComboBox->clear();
         for (auto&& i : portList) {
@@ -97,6 +105,8 @@ void MainWindow::closeEvent(QCloseEvent *event)
     settings.setValue("last_file", ui->fileNameEdit->text());
     settings.setValue("last_baud", ui->baudComboBox->currentIndex());
     settings.setValue("last_connection_type", ui->connectionTypeComboBox->currentIndex());
+    settings.setValue("last_erase_block_size", ui->eraseBlockSizeComboBox->currentText());
+    settings.setValue("last_start_address", ui->startAddressComboBox->currentText());
     event->accept();
 }
 
@@ -141,7 +151,18 @@ void MainWindow::on_connectButton_clicked()
             delete bootloader;
         }
         int baud = ui->baudComboBox->currentText().toInt();
-        bootloader = new UARTBootloader(ui->portComboBox->currentText(), baud);
+        bool ok;
+        uint32_t startAddress = ui->startAddressComboBox->currentText().toUInt(&ok, 16);
+        if (!ok) {
+            QMessageBox::critical(this, QApplication::applicationName(), "Invalid start address - Enter in hex");
+            return;
+        }
+        uint32_t eraseBlockSize = ui->eraseBlockSizeComboBox->currentText().toUInt(&ok, 10);
+        if (!ok) {
+            QMessageBox::critical(this, QApplication::applicationName(), "Invalid erase block size - Enter in decimal");
+            return;
+        }
+        bootloader = new UARTBootloader(ui->portComboBox->currentText(), baud, startAddress, eraseBlockSize);
         if (bootloader->isConnected()) {
             connect(bootloader, &Bootloader::message, this, &MainWindow::onMessage);
             connect(bootloader, &Bootloader::progress, this, &MainWindow::onProgress);

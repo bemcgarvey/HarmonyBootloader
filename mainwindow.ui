@@ -14,7 +14,7 @@
    <string>Harmony Bootloader</string>
   </property>
   <widget class="QWidget" name="centralwidget">
-   <layout class="QVBoxLayout" name="verticalLayout_4">
+   <layout class="QVBoxLayout" name="verticalLayout_6">
     <item>
      <spacer name="verticalSpacer_4">
       <property name="orientation">
@@ -198,9 +198,12 @@
         <property name="orientation">
          <enum>Qt::Horizontal</enum>
         </property>
+        <property name="sizeType">
+         <enum>QSizePolicy::Fixed</enum>
+        </property>
         <property name="sizeHint" stdset="0">
          <size>
-          <width>40</width>
+          <width>60</width>
           <height>20</height>
          </size>
         </property>
@@ -222,17 +225,116 @@
      </spacer>
     </item>
     <item>
-     <widget class="QPushButton" name="connectButton">
-      <property name="maximumSize">
-       <size>
-        <width>70</width>
-        <height>16777215</height>
-       </size>
-      </property>
-      <property name="text">
-       <string>Connect</string>
-      </property>
-     </widget>
+     <layout class="QHBoxLayout" name="horizontalLayout_6">
+      <item>
+       <widget class="QPushButton" name="connectButton">
+        <property name="maximumSize">
+         <size>
+          <width>70</width>
+          <height>16777215</height>
+         </size>
+        </property>
+        <property name="text">
+         <string>Connect</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <spacer name="horizontalSpacer_6">
+        <property name="orientation">
+         <enum>Qt::Horizontal</enum>
+        </property>
+        <property name="sizeHint" stdset="0">
+         <size>
+          <width>40</width>
+          <height>20</height>
+         </size>
+        </property>
+       </spacer>
+      </item>
+      <item>
+       <layout class="QHBoxLayout" name="horizontalLayout_5">
+        <item>
+         <layout class="QVBoxLayout" name="verticalLayout_4">
+          <item>
+           <widget class="QLabel" name="label_7">
+            <property name="text">
+             <string>App Start Address</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QComboBox" name="startAddressComboBox">
+            <property name="enabled">
+             <bool>false</bool>
+            </property>
+            <property name="editable">
+             <bool>true</bool>
+            </property>
+            <item>
+             <property name="text">
+              <string>0x402000</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>0x9d000000</string>
+             </property>
+            </item>
+           </widget>
+          </item>
+         </layout>
+        </item>
+        <item>
+         <layout class="QVBoxLayout" name="verticalLayout_5">
+          <item>
+           <widget class="QLabel" name="label_8">
+            <property name="text">
+             <string>Erase Block Size</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QComboBox" name="eraseBlockSizeComboBox">
+            <property name="enabled">
+             <bool>false</bool>
+            </property>
+            <property name="editable">
+             <bool>true</bool>
+            </property>
+            <item>
+             <property name="text">
+              <string>4096</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>8192</string>
+             </property>
+            </item>
+           </widget>
+          </item>
+         </layout>
+        </item>
+        <item>
+         <spacer name="horizontalSpacer_7">
+          <property name="orientation">
+           <enum>Qt::Horizontal</enum>
+          </property>
+          <property name="sizeType">
+           <enum>QSizePolicy::Fixed</enum>
+          </property>
+          <property name="sizeHint" stdset="0">
+           <size>
+            <width>40</width>
+            <height>20</height>
+           </size>
+          </property>
+         </spacer>
+        </item>
+       </layout>
+      </item>
+     </layout>
     </item>
     <item>
      <spacer name="verticalSpacer_2">
