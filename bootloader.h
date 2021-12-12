@@ -16,6 +16,7 @@ public:
     virtual bool programFlash() = 0;
     virtual uint16_t readCRC() = 0;
     virtual void jumpToApp() = 0;
+    virtual bool verify() = 0;
     virtual void abort();
     bool isAborted() {return m_abort;}
 protected:

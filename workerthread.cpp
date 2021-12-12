@@ -11,7 +11,11 @@ void WorkerThread::run()
     if (bootloader->eraseFlash()) {
         if (!bootloader->isAborted()) {
             if (bootloader->programFlash()) {
-                bootloader->jumpToApp();
+                if (!bootloader->isAborted()) {
+                    if (bootloader->verify()) {
+                        bootloader->jumpToApp();
+                    }
+                }
             }
         }
     }

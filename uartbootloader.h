@@ -25,6 +25,7 @@ public:
     virtual bool programFlash() override;
     virtual uint16_t readCRC() override;
     virtual void jumpToApp() override;
+    virtual bool verify() override;
 private:
     enum {BL_CMD_UNLOCK= 0xa0, BL_CMD_DATA = 0xa1, BL_CMD_VERIFY = 0xa2, BL_CMD_RESET = 0xa3};
     enum {BL_RESP_OK = 0x50, BL_RESP_ERROR = 0x51, BL_RESP_INVALID = 0x52, BL_RESP_CRC_OK = 0x53,
@@ -38,6 +39,8 @@ private:
     uint16_t m_eraseBlockSize;
     TxHeader m_txHeader;
     std::unique_ptr<QSerialPort> m_port;
+    uint32_t generateCRC(uint32_t &flashLen);
+    uint32_t m_flashCRC;
 };
 
 #endif // UARTBOOTLOADER_H

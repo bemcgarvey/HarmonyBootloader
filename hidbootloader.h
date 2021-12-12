@@ -20,6 +20,7 @@ public:
     virtual bool programFlash() override;
     virtual uint16_t readCRC() override;
     virtual void jumpToApp() override;
+    virtual bool verify() override;
 private:
     enum {READ_BOOT_INFO = 1, ERASE_FLASH, PROGRAM_FLASH, READ_CRC, JMP_TO_APP};
     enum {SOH = 0x01, EOT = 0x04, DLE = 0x10};

@@ -9,6 +9,7 @@ UARTBootloader::UARTBootloader(QString portName, int baud) :
     if (m_portName != "") {
         m_connected = true;
     }
+    m_flashCRC = 0xffffffff;
 }
 
 
@@ -44,21 +45,15 @@ bool UARTBootloader::eraseFlash()
 
 bool UARTBootloader::programFlash()
 {
-    emit message("Programming flash");
     uint32_t flashLen = 0;
     int blocks = 0;
     int currentBlock = 0;
     uint32_t data[m_eraseBlockSize / 4 + 1];  //extra word for address
     int bytesRead;
-    do {
-        bytesRead = m_binFile->read((char *)data, m_eraseBlockSize);
-        if (bytesRead > 0) {
-            flashLen += bytesRead;
-            ++blocks;
-        }
 
-    } while (bytesRead == m_eraseBlockSize);
-    m_binFile->reset();
+    emit message("Programming flash");
+    m_flashCRC = generateCRC(flashLen);
+    blocks = flashLen / m_eraseBlockSize;
     m_port = std::make_unique<QSerialPort>(new QSerialPort(nullptr));
     m_port->setPortName(m_portName);
     m_port->setBaudRate(m_baud);
@@ -70,27 +65,28 @@ bool UARTBootloader::programFlash()
         emit finished(false);
         return false;
     }
-    uint32_t currentAddress = m_flashStart;
     char result;
+    m_txHeader.size = 8;
+    m_txHeader.command = BL_CMD_UNLOCK;
+    m_port->write(m_txHeader.bytes, 9);
+    m_port->flush();
+    uint32_t unlock[2] = {m_flashStart, flashLen};
+    m_port->write((char *)&unlock[0], 8);
+    m_port->flush();
+    m_port->waitForReadyRead(1000);
+    if (m_port->bytesAvailable() < 1) {
+        emit finished(false);
+        return false;
+    }
+    m_port->read(&result, 1);
+    if (result != BL_RESP_OK) {
+        emit finished(false);
+        return false;
+    }
+    m_binFile->reset();
+    uint32_t currentAddress = m_flashStart;
     while (currentBlock < blocks) {
         if (m_abort) {
-            emit finished(false);
-            return false;
-        }
-        m_txHeader.size = 8;
-        m_txHeader.command = BL_CMD_UNLOCK;
-        m_port->write(m_txHeader.bytes, 9);
-        m_port->flush();
-        uint32_t unlock[2] = {currentAddress, m_eraseBlockSize};
-        m_port->write((char *)&unlock[0], 8);
-        m_port->flush();
-        m_port->waitForReadyRead(1000);
-        if (m_port->bytesAvailable() < 1) {
-            emit finished(false);
-            return false;
-        }
-        m_port->read(&result, 1);
-        if (result != BL_RESP_OK) {
             emit finished(false);
             return false;
         }
@@ -144,4 +140,66 @@ void UARTBootloader::jumpToApp()
     m_port->read(&result, 1);
     m_port->close();
     emit finished(true);
+}
+
+bool UARTBootloader::verify()
+{
+    m_txHeader.size = 4;
+    m_txHeader.command = BL_CMD_VERIFY;
+    m_port->write(m_txHeader.bytes, 9);
+    m_port->flush();
+    m_port->write((char *)&m_flashCRC, 4);
+    m_port->flush();
+    char result = 0;
+    m_port->waitForReadyRead(1000);
+    if (m_port->bytesAvailable() < 1) {
+        return false;
+    }
+    m_port->read(&result, 1);
+    if (result != BL_RESP_CRC_OK) {
+        emit message("Flash verify failed");
+        return false;
+    }
+    emit message("Flash verified");
+    return true;
+}
+
+uint32_t UARTBootloader::generateCRC(uint32_t &flashLen)
+{
+    uint32_t   value;
+    uint32_t   crc_tab[256];
+    uint32_t   crc = 0xffffffff;
+    uint8_t    data[m_eraseBlockSize];
+    int bytesRead;
+    flashLen = 0;
+    for (int i = 0; i < 256; i++)
+    {
+        value = i;
+        for (int j = 0; j < 8; j++)
+        {
+            if (value & 1)
+            {
+                value = (value >> 1) ^ 0xEDB88320;
+            }
+            else
+            {
+                value >>= 1;
+            }
+        }
+        crc_tab[i] = value;
+    }
+    m_binFile->reset();
+    do {
+        bytesRead = m_binFile->read((char *)data, m_eraseBlockSize);
+        if (bytesRead > 0) {
+            flashLen += m_eraseBlockSize;
+        }
+        for (int i = 0; i < m_eraseBlockSize; ++i) {
+            if (i >= bytesRead) {
+                data[i] = 0xff;
+            }
+            crc = crc_tab[(crc ^ data[i]) & 0xff] ^ (crc >> 8);
+        }
+    } while (bytesRead == m_eraseBlockSize);
+    return crc;
 }

@@ -198,3 +198,9 @@ uint8_t HidBootloader::hexCharToInt(char c)
     }
     return 0;
 }
+
+
+bool HidBootloader::verify()
+{
+    return true;
+}
