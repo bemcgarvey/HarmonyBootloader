@@ -8,19 +8,19 @@ class Bootloader : public QObject
     Q_OBJECT
 public:
     Bootloader();
+    //TODO some of these can have a default behavior and not be pure
+    //TODO add const to functions where appropriate
     virtual ~Bootloader() = 0;
     virtual bool isConnected() = 0;
-    virtual int readBootInfo() = 0;
+    virtual int readBootInfo();
     virtual bool setFile(QString fileName) = 0;
-    virtual bool eraseFlash() = 0;
+    virtual bool eraseFlash();
     virtual bool programFlash() = 0;
-    virtual uint16_t readCRC() = 0;
     virtual void jumpToApp() = 0;
     virtual bool verify() = 0;
     virtual void abort();
     bool isAborted() {return m_abort;}
 protected:
-    virtual uint16_t calculateCRC(uint8_t *data, uint32_t len);
     bool m_abort;
 signals:
     void finished(bool success);

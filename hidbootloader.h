@@ -18,7 +18,6 @@ public:
     virtual int readBootInfo() override;
     virtual bool eraseFlash() override;
     virtual bool programFlash() override;
-    virtual uint16_t readCRC() override;
     virtual void jumpToApp() override;
     virtual bool verify() override;
 private:
@@ -34,6 +33,8 @@ private:
     std::unique_ptr<QFile> m_hexFile;
     bool parseHexRecord(char *hexRec);
     uint8_t hexCharToInt(char c);
+    uint16_t readCRC(uint32_t address, uint32_t len);
+    uint16_t calculateCRC(uint8_t *data, uint32_t len, uint16_t crc = 0);
 };
 
 #endif // HIDBOOTLOADER_H

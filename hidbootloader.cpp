@@ -44,6 +44,8 @@ bool HidBootloader::setFile(QString fileName)
     }
 }
 
+#include <QDebug>
+
 bool HidBootloader::eraseFlash()
 {
     emit message("Erasing device");
@@ -105,19 +107,30 @@ bool HidBootloader::programFlash()
     return true;
 }
 
-uint16_t HidBootloader::readCRC()
+uint16_t HidBootloader::readCRC(uint32_t address, uint32_t len)
 {
-    return 0;
+    transferBuffer[0] = READ_CRC;
+    *(uint32_t *)&transferBuffer[1] = address;
+    *(uint32_t *)&transferBuffer[5] = len;
+    bufferLen = 9;
+    int outLen = processOutput();
+    m_link->WriteDevice(processedBuffer, outLen);
+    m_link->ReadDevice(transferBuffer, 500);
+    bufferLen = 64;
+    bufferLen = processInput();
+    if (bufferLen != 3 || processedBuffer[0] != READ_CRC) {
+        return -1;
+    }
+    return *(uint16_t *)&processedBuffer[1];
 }
 
 void HidBootloader::jumpToApp()
 {
     transferBuffer[0] = JMP_TO_APP;
     bufferLen = 1;
-    processOutput();
-    m_link->WriteDevice(processedBuffer, 1);
+    int len = processOutput();
+    m_link->WriteDevice(processedBuffer, len);
     m_link->ReadDevice(transferBuffer);
-
 }
 
 int HidBootloader::processOutput()
@@ -169,6 +182,9 @@ int HidBootloader::processInput()
 
 bool HidBootloader::parseHexRecord(char *hexRec)
 {
+    //TODO calculate crc for each record until an address change or eof.
+    //Keep list of address regions with crc
+    //At end verify each region
     bufferLen = 0;
     transferBuffer[bufferLen++] = PROGRAM_FLASH;
     if (*hexRec != ':') {
@@ -203,4 +219,26 @@ uint8_t HidBootloader::hexCharToInt(char c)
 bool HidBootloader::verify()
 {
     return true;
+}
+
+uint16_t HidBootloader::calculateCRC(uint8_t *data, uint32_t len, uint16_t crc)
+{
+    static const uint16_t crc_table[16] =
+    {
+        0x0000, 0x1021, 0x2042, 0x3063, 0x4084, 0x50a5, 0x60c6, 0x70e7,
+        0x8108, 0x9129, 0xa14a, 0xb16b, 0xc18c, 0xd1ad, 0xe1ce, 0xf1ef
+    };
+    uint32_t i;
+    //uint16_t crc = 0;
+
+    while(len--)
+    {
+        i = (crc >> 12) ^ (*data >> 4);
+        crc = crc_table[i & 0x0F] ^ (crc << 4);
+        i = (crc >> 12) ^ (*data >> 0);
+        crc = crc_table[i & 0x0F] ^ (crc << 4);
+        data++;
+    }
+
+    return (crc & 0xFFFF);
 }

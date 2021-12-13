@@ -17,11 +17,6 @@ bool UARTBootloader::isConnected()
     return m_connected;
 }
 
-int UARTBootloader::readBootInfo()
-{
-    return 0;
-}
-
 bool UARTBootloader::setFile(QString fileName)
 {
     if (!fileName.endsWith(".bin", Qt::CaseInsensitive)) {
@@ -35,11 +30,6 @@ bool UARTBootloader::setFile(QString fileName)
         m_binFile = nullptr;
         return false;
     }
-}
-
-bool UARTBootloader::eraseFlash()
-{
-    return true;
 }
 
 bool UARTBootloader::programFlash()
@@ -115,11 +105,6 @@ bool UARTBootloader::programFlash()
         emit progress(currentBlock * 100 / blocks);
     }
     return true;
-}
-
-uint16_t UARTBootloader::readCRC()
-{
-    return 0;
 }
 
 void UARTBootloader::jumpToApp()

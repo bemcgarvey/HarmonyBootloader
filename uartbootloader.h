@@ -19,11 +19,8 @@ class UARTBootloader : public Bootloader
 public:
     UARTBootloader(QString portName, int baud, uint32_t startAddress, uint16_t eraseBlockSize);
     virtual bool isConnected() override;
-    virtual int readBootInfo() override;
     virtual bool setFile(QString fileName) override;
-    virtual bool eraseFlash() override;
     virtual bool programFlash() override;
-    virtual uint16_t readCRC() override;
     virtual void jumpToApp() override;
     virtual bool verify() override;
 private:
