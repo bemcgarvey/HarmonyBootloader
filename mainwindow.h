@@ -30,6 +30,8 @@ private slots:
 
     void on_actionOpen_hex_file_triggered();
 
+    void on_actionAbout_triggered();
+
 private:
     QString fileName;
     QLabel *connectLabel;

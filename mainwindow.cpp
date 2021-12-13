@@ -8,6 +8,7 @@
 #include "uartbootloader.h"
 #include "workerthread.h"
 #include <QtSerialPort/QSerialPortInfo>
+#include "aboutdialog.h"
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -233,5 +234,12 @@ void MainWindow::on_actionExit_triggered()
 void MainWindow::on_actionOpen_hex_file_triggered()
 {
     on_browseButton_clicked();
+}
+
+
+void MainWindow::on_actionAbout_triggered()
+{
+    std::unique_ptr<AboutDialog> dlg(new AboutDialog(this));
+    dlg->exec();
 }
 
