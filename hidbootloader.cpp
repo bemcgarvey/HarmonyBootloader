@@ -36,7 +36,7 @@ bool HidBootloader::setFile(QString fileName)
     if (!fileName.endsWith(".hex", Qt::CaseInsensitive)) {
         return false;
     }
-    m_hexFile = std::make_unique<QFile>(new QFile());
+    m_hexFile.reset(new QFile());
     m_hexFile->setFileName(fileName);
     if (m_hexFile->open(QIODevice::ReadOnly | QIODevice::Text)) {
         return true;

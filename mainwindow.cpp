@@ -10,8 +10,10 @@
 #include <QtSerialPort/QSerialPortInfo>
 #include "aboutdialog.h"
 
-//TODO modify UART bootloader to process hex files.
-// basically add a hex to bin function.
+//TODO remove hexfile code from HidBootloader
+//TODO change bootloader and worker thread pointers to a smart pointer.
+//TODO if UART is using hex file set Start address from hex file or confirm it matches??
+// Warn if it doesn't match?
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -78,7 +80,7 @@ void MainWindow::on_browseButton_clicked()
     if (ui->connectionTypeComboBox->currentText() == "USB") {
         filter = "hex files (*.hex)";
     } else if (ui->connectionTypeComboBox->currentText() == "UART"){
-        filter = "bin files (*.bin)";
+        filter = "hex or bin files (*.hex *.bin)";
     }
     fileName = QFileDialog::getOpenFileName(this, "Open firmware file", "", filter);
     if (fileName != "") {

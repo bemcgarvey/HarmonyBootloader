@@ -12,6 +12,7 @@ SOURCES += \
     aboutdialog.cpp \
     bootloader.cpp \
     bootloaderusblink.cpp \
+    hexfile.cpp \
     hidbootloader.cpp \
     main.cpp \
     mainwindow.cpp \
@@ -22,6 +23,7 @@ HEADERS += \
     aboutdialog.h \
     bootloader.h \
     bootloaderusblink.h \
+    hexfile.h \
     hidbootloader.h \
     mainwindow.h \
     uartbootloader.h \

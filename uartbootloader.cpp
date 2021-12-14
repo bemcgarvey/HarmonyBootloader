@@ -1,4 +1,5 @@
 #include "uartbootloader.h"
+#include "hexfile.h"
 
 UARTBootloader::UARTBootloader(QString portName, int baud, uint32_t startAddress, uint16_t eraseBlockSize) :
     Bootloader(), m_portName(portName), m_baud(baud)
@@ -19,17 +20,19 @@ bool UARTBootloader::isConnected()
 
 bool UARTBootloader::setFile(QString fileName)
 {
-    if (!fileName.endsWith(".bin", Qt::CaseInsensitive)) {
-        return false;
+    if (fileName.endsWith(".hex", Qt::CaseInsensitive)) {
+        m_binFile.reset(HexFile::hexToBinFile(fileName));
+        if (m_binFile) {
+            return m_binFile->open(QIODevice::ReadOnly);
+        } else {
+            return false;
+        }
+    } else if (fileName.endsWith(".bin", Qt::CaseInsensitive)) {
+        m_binFile.reset(new QFile());
+        m_binFile->setFileName(fileName);
+        return m_binFile->open(QIODevice::ReadOnly);
     }
-    m_binFile = std::make_unique<QFile>(new QFile());
-    m_binFile->setFileName(fileName);
-    if (m_binFile->open(QIODevice::ReadOnly)) {
-        return true;
-    } else {
-        m_binFile = nullptr;
-        return false;
-    }
+    return false;
 }
 
 bool UARTBootloader::programFlash()
@@ -43,7 +46,7 @@ bool UARTBootloader::programFlash()
     emit message("Programming flash");
     m_flashCRC = generateCRC(flashLen);
     blocks = flashLen / m_eraseBlockSize;
-    m_port = std::make_unique<QSerialPort>(new QSerialPort(nullptr));
+    m_port.reset(new QSerialPort(nullptr));
     m_port->setPortName(m_portName);
     m_port->setBaudRate(m_baud);
     m_port->setDataBits(QSerialPort::Data8);
@@ -188,3 +191,4 @@ uint32_t UARTBootloader::generateCRC(uint32_t &flashLen)
     } while (bytesRead == m_eraseBlockSize);
     return crc;
 }
+
