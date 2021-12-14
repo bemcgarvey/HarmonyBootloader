@@ -17,10 +17,6 @@ bool Bootloader::eraseFlash()
     return true;
 }
 
-Bootloader::~Bootloader() {
-
-}
-
 void Bootloader::abort()
 {
     m_abort = true;

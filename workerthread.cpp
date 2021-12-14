@@ -8,17 +8,17 @@ WorkerThread::WorkerThread(Bootloader *boot) : QThread(), bootloader(boot)
 
 void WorkerThread::run()
 {
-    //TODO make this more sequential without the deeply nested ifs
-    //use a result variable and returns
-    if (bootloader->eraseFlash()) {
-        if (!bootloader->isAborted()) {
-            if (bootloader->programFlash()) {
-                if (!bootloader->isAborted()) {
-                    if (bootloader->verify()) {
-                        bootloader->jumpToApp();
-                    }
-                }
-            }
-        }
+    bool success;
+    success = bootloader->eraseFlash();
+    if (!success || bootloader->isAborted()) {
+        return;
+    }
+    success = bootloader->programFlash();
+    if (!success || bootloader->isAborted()) {
+        return;
+    }
+    success = bootloader->verify();
+    if (success) {
+        bootloader->jumpToApp();
     }
 }

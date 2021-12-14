@@ -8,8 +8,6 @@ class Bootloader : public QObject
     Q_OBJECT
 public:
     Bootloader();
-    //TODO add const to functions where appropriate
-    virtual ~Bootloader() = 0;
     virtual bool isConnected() = 0;
     virtual int readBootInfo();
     virtual bool setFile(QString fileName) = 0;

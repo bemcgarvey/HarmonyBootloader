@@ -16,7 +16,6 @@ class HidBootloader : public Bootloader
 {
 public:
     HidBootloader(uint16_t vid, uint16_t pid);
-    ~HidBootloader() {};
     virtual bool isConnected() override;
     virtual bool setFile(QString fileName) override;
     virtual int readBootInfo() override;

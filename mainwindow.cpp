@@ -10,6 +10,9 @@
 #include <QtSerialPort/QSerialPortInfo>
 #include "aboutdialog.h"
 
+//TODO modify UART bootloader to process hex files.
+// basically add a hex to bin function.
+
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
     , ui(new Ui::MainWindow), bootloader(nullptr), worker(nullptr)

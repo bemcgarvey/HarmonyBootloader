@@ -105,6 +105,7 @@ bool HidBootloader::programFlash()
     }
     emit progress(100);
     emit finished(true);
+    m_hexFile->close();
     return true;
 }
 

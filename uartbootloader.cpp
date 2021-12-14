@@ -104,6 +104,7 @@ bool UARTBootloader::programFlash()
         currentAddress += m_eraseBlockSize;
         emit progress(currentBlock * 100 / blocks);
     }
+    m_binFile->close();
     return true;
 }
 
