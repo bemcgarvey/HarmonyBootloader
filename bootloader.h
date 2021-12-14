@@ -8,7 +8,6 @@ class Bootloader : public QObject
     Q_OBJECT
 public:
     Bootloader();
-    //TODO some of these can have a default behavior and not be pure
     //TODO add const to functions where appropriate
     virtual ~Bootloader() = 0;
     virtual bool isConnected() = 0;

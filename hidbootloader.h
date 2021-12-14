@@ -3,10 +3,14 @@
 
 #include "bootloaderusblink.h"
 #include "bootloader.h"
-#include <memory>
+#include <QList>
 #include <QFile>
 
-
+typedef struct {
+    uint32_t startAddress;
+    uint32_t length;
+    uint16_t crc;
+} FlashRegion;
 
 class HidBootloader : public Bootloader
 {
@@ -25,16 +29,22 @@ private:
     enum {SOH = 0x01, EOT = 0x04, DLE = 0x10};
     int processOutput(void);
     int processInput(void);
-    uint8_t transferBuffer[512];
-    uint8_t processedBuffer[512];
-    int bufferLen;
-    int processedLen;
+    uint8_t m_transferBuffer[512];
+    uint8_t m_processedBuffer[512];
+    int m_bufferLen;
     std::unique_ptr<BootLoaderUSBLink> m_link;
     std::unique_ptr<QFile> m_hexFile;
     bool parseHexRecord(char *hexRec);
     uint8_t hexCharToInt(char c);
     uint16_t readCRC(uint32_t address, uint32_t len);
     uint16_t calculateCRC(uint8_t *data, uint32_t len, uint16_t crc = 0);
+    uint16_t m_sectionCRC;
+    uint32_t m_sectionStartAddress;
+    uint32_t m_currentAddress;
+    uint32_t m_linAddress;
+    uint32_t m_segAddress;
+    enum {HEX_DATA = 0, HEX_EOF = 1, HEX_SEG_ADDRESS = 2, HEX_LIN_ADDRESS = 4};
+    QList<FlashRegion> m_regionList;
 };
 
 #endif // HIDBOOTLOADER_H
