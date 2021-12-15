@@ -25,19 +25,17 @@ private slots:
     void onProgress(int progress);
     void onBootloaderFinished(bool success);
     void on_programButton_clicked();
-
     void on_actionExit_triggered();
-
     void on_actionOpen_hex_file_triggered();
-
     void on_actionAbout_triggered();
+    void on_fileNameEdit_textChanged(const QString &arg1);
 
 private:
     QString fileName;
     QLabel *connectLabel;
     Ui::MainWindow *ui;
-    Bootloader *bootloader;
-    WorkerThread *worker;
+    std::unique_ptr<Bootloader> bootloader;
+    std::unique_ptr<WorkerThread> worker;
 protected:
     virtual void closeEvent(QCloseEvent *event) override;
 };

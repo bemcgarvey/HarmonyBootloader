@@ -97,20 +97,19 @@ HexFile::HexFile()
 
 }
 
-QFile *HexFile::hexToBinFile(QString hexFileName, QString binFileName)
+std::unique_ptr<QFile> HexFile::hexToBinFile(QString hexFileName, QString binFileName)
 {
     std::unique_ptr<QFile> hexFile(new QFile(hexFileName));
     if (!hexFile->open(QIODevice::ReadOnly | QIODevice::Text)) {
         return nullptr;
     }
-    QFile *binFile;
+    std::unique_ptr<QFile> binFile;
     if (binFileName == "") {
-        binFile = new QTemporaryFile();
+        binFile.reset(new QTemporaryFile());
     } else {
-        binFile = new QFile(binFileName);
+        binFile.reset(new QFile(binFileName));
     }
     if (!binFile->open(QIODevice::WriteOnly | QIODevice::Truncate)) {
-        delete binFile;
         return nullptr;
     }
     uint32_t currentAddress = 0;
@@ -153,6 +152,5 @@ QFile *HexFile::hexToBinFile(QString hexFileName, QString binFileName)
     //Should never get here unless EOF record is missing.
     //In that case the hex file is probably invalid
     binFile->close();
-    delete binFile;
     return nullptr;
 }

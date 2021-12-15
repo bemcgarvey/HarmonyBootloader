@@ -11,9 +11,7 @@
 #include "aboutdialog.h"
 
 //TODO remove hexfile code from HidBootloader
-//TODO change bootloader and worker thread pointers to a smart pointer.
-//TODO if UART is using hex file set Start address from hex file or confirm it matches??
-// Warn if it doesn't match?
+//TODO if UART is using hex file set Start address from hex file
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -23,16 +21,17 @@ MainWindow::MainWindow(QWidget *parent)
     ui->setupUi(this);
     ui->vidEdit->setText(settings.value("last_vid", "0x4d63").toString());
     ui->pidEdit->setText(settings.value("last_pid", "0x1234").toString());
-    std::unique_ptr<QFile> test(new QFile(settings.value("last_file", "").toString()));
-    if (test->exists()) {
-        ui->fileNameEdit->setText(settings.value("last_file", "").toString());
-    }
     ui->baudComboBox->setCurrentIndex(settings.value("last_baud", 0).toInt());
     ui->connectionTypeComboBox->setCurrentIndex(settings.value("last_connection_type", 0).toInt());
     ui->eraseBlockSizeComboBox->setCurrentText(
                 settings.value("last_erase_block_size", "8192").toString());
     ui->startAddressComboBox->setCurrentText(
                 settings.value("last_start_address", "0x402000").toString());
+    std::unique_ptr<QFile> test(new QFile(settings.value("last_file", "").toString()));
+    if (test->exists()) {
+        ui->fileNameEdit->setText(settings.value("last_file", "").toString());
+    }
+    ui->statusbar->clearMessage();
     connectLabel = new QLabel("Not connected");
     ui->statusbar->addWidget(connectLabel);
 }
@@ -40,12 +39,6 @@ MainWindow::MainWindow(QWidget *parent)
 MainWindow::~MainWindow()
 {
     delete ui;
-    if (worker) {
-        delete worker;
-    }
-    if (bootloader) {
-        delete bootloader;
-    }
 }
 
 
@@ -132,34 +125,22 @@ void MainWindow::on_connectButton_clicked()
             QMessageBox::critical(this, QApplication::applicationName(), "Invalid pid - Enter in hex");
             return;
         }
-        if (bootloader) {
-            delete bootloader;
-        }
-        bootloader = new HidBootloader(vid, pid);
+        bootloader.reset(new HidBootloader(vid, pid));
         if (bootloader->isConnected()) {
-            connect(bootloader, &Bootloader::message, this, &MainWindow::onMessage);
-            connect(bootloader, &Bootloader::progress, this, &MainWindow::onProgress);
-            connect(bootloader, &Bootloader::finished, this, &MainWindow::onBootloaderFinished);
-            ui->programButton->setEnabled(true);
             int version = bootloader->readBootInfo();
             connectLabel->setText(QString("Connected: VID = %1 PID = %2 Bootloader Version = %3.%4")
                                   .arg(ui->vidEdit->text(), ui->pidEdit->text())
                                   .arg(version >> 8).arg(version & 0xff));
         } else {
-            connectLabel->setText("Not connected");
-            ui->programButton->setEnabled(false);
             QMessageBox::critical(this, QApplication::applicationName()
                                   , QString("Unable to open device with vid=%1, pid=%2")
                                     .arg(ui->vidEdit->text(), ui->pidEdit->text()));
         }
     } else if (ui->connectionTypeComboBox->currentText() == "UART") {
-        if (bootloader) {
-            delete bootloader;
-        }
         int baud = ui->baudComboBox->currentText().toInt();
         bool ok;
         uint32_t startAddress = ui->startAddressComboBox->currentText().toUInt(&ok, 16);
-        if (!ok) {
+        if (!ok && ui->fileNameEdit->text().endsWith(".bin", Qt::CaseInsensitive)) {
             QMessageBox::critical(this, QApplication::applicationName(), "Invalid start address - Enter in hex");
             return;
         }
@@ -168,21 +149,24 @@ void MainWindow::on_connectButton_clicked()
             QMessageBox::critical(this, QApplication::applicationName(), "Invalid erase block size - Enter in decimal");
             return;
         }
-        bootloader = new UARTBootloader(ui->portComboBox->currentText(), baud, startAddress, eraseBlockSize);
+        bootloader.reset(new UARTBootloader(ui->portComboBox->currentText(), baud, startAddress, eraseBlockSize));
         if (bootloader->isConnected()) {
-            connect(bootloader, &Bootloader::message, this, &MainWindow::onMessage);
-            connect(bootloader, &Bootloader::progress, this, &MainWindow::onProgress);
-            connect(bootloader, &Bootloader::finished, this, &MainWindow::onBootloaderFinished);
             connectLabel->setText(QString("Connected: %1 %2 baud")
                                   .arg(ui->portComboBox->currentText()).arg(baud));
-            ui->programButton->setEnabled(true);
         } else {
-            connectLabel->setText("Not connected");
-            ui->programButton->setEnabled(false);
             QMessageBox::critical(this, QApplication::applicationName()
                                   , QString("Unable to open port: %1")
                                   .arg(ui->portComboBox->currentText()));
         }
+    }
+    if (bootloader->isConnected()) {
+        connect(bootloader.get(), &Bootloader::message, this, &MainWindow::onMessage);
+        connect(bootloader.get(), &Bootloader::progress, this, &MainWindow::onProgress);
+        connect(bootloader.get(), &Bootloader::finished, this, &MainWindow::onBootloaderFinished);
+        ui->programButton->setEnabled(true);
+    } else {
+        connectLabel->setText("Not connected");
+        ui->programButton->setEnabled(false);
     }
 }
 
@@ -200,7 +184,6 @@ void MainWindow::onBootloaderFinished(bool success)
 {
     if (worker) {
         worker->wait();
-        delete worker;
         worker = nullptr;
     }
     if (success) {
@@ -225,7 +208,7 @@ void MainWindow::on_programButton_clicked()
         return;
     }
     ui->progressBar->setValue(0);
-    worker = new WorkerThread(bootloader);
+    worker.reset(new WorkerThread(bootloader.get()));
     worker->start();
 }
 
@@ -246,5 +229,18 @@ void MainWindow::on_actionAbout_triggered()
 {
     std::unique_ptr<AboutDialog> dlg(new AboutDialog(this));
     dlg->exec();
+}
+
+
+void MainWindow::on_fileNameEdit_textChanged(const QString &arg1)
+{
+    if (ui->connectionTypeComboBox->currentText() == "UART") {
+        if (arg1.endsWith(".hex", Qt::CaseInsensitive)) {
+            ui->startAddressComboBox->setEnabled(false);
+            ui->statusbar->showMessage("Using hex file for flash start address", 3000);
+        } else {
+            ui->startAddressComboBox->setEnabled(true);
+        }
+    }
 }
 
