@@ -97,7 +97,7 @@ HexFile::HexFile()
 
 }
 
-std::unique_ptr<QFile> HexFile::hexToBinFile(QString hexFileName, QString binFileName)
+std::unique_ptr<QFile> HexFile::hexToBinFile(QString hexFileName, uint32_t &startAddress, QString binFileName)
 {
     std::unique_ptr<QFile> hexFile(new QFile(hexFileName));
     if (!hexFile->open(QIODevice::ReadOnly | QIODevice::Text)) {
@@ -117,6 +117,7 @@ std::unique_ptr<QFile> HexFile::hexToBinFile(QString hexFileName, QString binFil
     uint32_t linAddress = 0;
     uint32_t segAddress = 0;
     char lineBuffer[265];
+    bool firstDataRecProcessed = false;
     while (hexFile->readLine(lineBuffer, 265) > 0) {
         HexRecord rec(lineBuffer);
         if (!rec.isValid()) {
@@ -132,6 +133,10 @@ std::unique_ptr<QFile> HexFile::hexToBinFile(QString hexFileName, QString binFil
         case HexRecord::HEX_DATA:
             recordAddress = rec.address();
             recordAddress += segAddress + linAddress;
+            if (!firstDataRecProcessed) {
+                startAddress = recordAddress;
+                firstDataRecProcessed = true;
+            }
             if (recordAddress != currentAddress) {
                 if (currentAddress != 0) {
                     for (uint32_t i = currentAddress; i < recordAddress; ++i) {

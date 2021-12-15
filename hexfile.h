@@ -26,7 +26,7 @@ class HexFile
 {
 public:
     HexFile();
-    static std::unique_ptr<QFile> hexToBinFile(QString hexFileName, QString binFileName = "");
+    static std::unique_ptr<QFile> hexToBinFile(QString hexFileName, uint32_t &startAddress, QString binFileName = "");
 };
 
 #endif // HEXFILE_H

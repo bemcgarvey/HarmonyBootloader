@@ -11,7 +11,6 @@
 #include "aboutdialog.h"
 
 //TODO remove hexfile code from HidBootloader
-//TODO if UART is using hex file set Start address from hex file
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)

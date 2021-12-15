@@ -21,7 +21,7 @@ bool UARTBootloader::isConnected()
 bool UARTBootloader::setFile(QString fileName)
 {
     if (fileName.endsWith(".hex", Qt::CaseInsensitive)) {
-        m_binFile = HexFile::hexToBinFile(fileName);
+        m_binFile = HexFile::hexToBinFile(fileName, m_flashStart);
         if (m_binFile) {
             return m_binFile->open(QIODevice::ReadOnly);
         } else {
