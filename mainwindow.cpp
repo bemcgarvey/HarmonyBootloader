@@ -10,8 +10,6 @@
 #include <QtSerialPort/QSerialPortInfo>
 #include "aboutdialog.h"
 
-//TODO remove hexfile code from HidBootloader
-
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
     , ui(new Ui::MainWindow), bootloader(nullptr), worker(nullptr)
@@ -74,7 +72,8 @@ void MainWindow::on_browseButton_clicked()
     } else if (ui->connectionTypeComboBox->currentText() == "UART"){
         filter = "hex or bin files (*.hex *.bin)";
     }
-    fileName = QFileDialog::getOpenFileName(this, "Open firmware file", "", filter);
+    QFileInfo fileInfo(ui->fileNameEdit->text());
+    fileName = QFileDialog::getOpenFileName(this, "Open firmware file", fileInfo.absolutePath(), filter);
     if (fileName != "") {
         ui->fileNameEdit->setText(fileName);
     }

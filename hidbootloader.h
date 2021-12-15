@@ -33,8 +33,6 @@ private:
     int m_bufferLen;
     std::unique_ptr<BootLoaderUSBLink> m_link;
     std::unique_ptr<QFile> m_hexFile;
-    bool parseHexRecord(char *hexRec);
-    uint8_t hexCharToInt(char c);
     uint16_t readCRC(uint32_t address, uint32_t len);
     uint16_t calculateCRC(uint8_t *data, uint32_t len, uint16_t crc = 0);
     uint16_t m_sectionCRC;
@@ -42,7 +40,6 @@ private:
     uint32_t m_currentAddress;
     uint32_t m_linAddress;
     uint32_t m_segAddress;
-    enum {HEX_DATA = 0, HEX_EOF = 1, HEX_SEG_ADDRESS = 2, HEX_LIN_ADDRESS = 4};
     QList<FlashRegion> m_regionList;
 };
 

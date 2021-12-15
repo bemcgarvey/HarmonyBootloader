@@ -1,4 +1,5 @@
 #include "hidbootloader.h"
+#include "hexfile.h"
 
 HidBootloader::HidBootloader(uint16_t vid, uint16_t pid):
     Bootloader(), m_link(std::unique_ptr<BootLoaderUSBLink>(new BootLoaderUSBLink())),
@@ -72,9 +73,10 @@ bool HidBootloader::programFlash()
         return false;
     }
     int lineCount = 0;
-    char lineBuffer[512];
+    char lineBuffer[265];
     m_hexFile->reset();
-    while (m_hexFile->readLine(lineBuffer, 512) > 0) {
+    //Count lines so we can calculate progress
+    while (m_hexFile->readLine(lineBuffer, sizeof (lineBuffer)) > 0) {
         ++lineCount;
     }
     if (lineCount == 0) {
@@ -84,12 +86,45 @@ bool HidBootloader::programFlash()
     int currentLine = 0;
     emit message("Programming flash");
     m_regionList.clear();
-    while (m_hexFile->readLine(lineBuffer, 512) > 0) {
+    uint32_t recordAddress;
+    while (m_hexFile->readLine(lineBuffer, sizeof (lineBuffer)) > 0) {
         if (m_abort) {
             emit finished(false);
             return false;
         }
-        if (parseHexRecord(lineBuffer)) {
+        HexRecord hex(lineBuffer);
+        if (hex.isValid()) {
+            switch (hex.recType()) {
+            case HexRecord::HEX_LIN_ADDRESS:
+                m_linAddress = hex.address();
+                break;
+            case HexRecord::HEX_SEG_ADDRESS:
+                m_segAddress = hex.address();
+                break;
+            case HexRecord::HEX_DATA:
+                recordAddress = hex.address() + m_segAddress + m_linAddress;
+                if (recordAddress != m_currentAddress) {
+                    //save previous region
+                    FlashRegion prevRegion
+                            = {m_sectionStartAddress, m_currentAddress - m_sectionStartAddress, m_sectionCRC};
+                    m_regionList.append(prevRegion);
+                    m_sectionStartAddress = recordAddress;
+                    m_currentAddress = recordAddress;
+                    m_sectionCRC = 0;
+                }
+                m_sectionCRC = calculateCRC(hex.data(), hex.dataLength(), m_sectionCRC);
+                m_currentAddress += hex.dataLength();
+                break;
+            case HexRecord::HEX_EOF:
+                //save last region
+                FlashRegion lastRegion
+                        = {m_sectionStartAddress, m_currentAddress - m_sectionStartAddress, m_sectionCRC};
+                m_regionList.append(lastRegion);
+                break;
+            }
+            m_transferBuffer[0] = PROGRAM_FLASH;
+            memcpy(&m_transferBuffer[1], hex.toBinary(), hex.recLength());
+            m_bufferLen = hex.recLength() + 1;
             int len = processOutput();
             m_link->WriteDevice(m_processedBuffer, len);
             m_link->ReadDevice(m_transferBuffer, 200);
@@ -180,79 +215,6 @@ int HidBootloader::processInput()
     } else {
         return outPos - 2;
     }
-}
-
-bool HidBootloader::parseHexRecord(char *hexRec)
-{
-    m_bufferLen = 0;
-    m_transferBuffer[m_bufferLen++] = PROGRAM_FLASH;
-    if (*hexRec != ':') {
-        return false;
-    }
-    ++hexRec;
-    while (*hexRec) {
-        if (*hexRec == '\n') {
-            break;
-        }
-        m_transferBuffer[m_bufferLen] = hexCharToInt(*hexRec++) << 4;
-        m_transferBuffer[m_bufferLen++] += hexCharToInt(*hexRec++);
-    }
-    uint8_t recType = m_transferBuffer[4];
-    switch (recType) {
-    case HEX_LIN_ADDRESS:
-        m_linAddress = m_transferBuffer[5];
-        m_linAddress <<= 8;
-        m_linAddress += m_transferBuffer[6];
-        m_linAddress <<= 16;
-        break;
-    case HEX_SEG_ADDRESS:
-        m_segAddress = m_transferBuffer[5];
-        m_segAddress <<= 8;
-        m_segAddress += m_transferBuffer[6];
-        m_linAddress <<= 4;
-        break;
-    case HEX_DATA: {
-        uint32_t recordAddress = m_transferBuffer[2];
-        recordAddress <<= 8;
-        recordAddress += m_transferBuffer[3];
-        recordAddress += m_segAddress + m_linAddress;
-        if (recordAddress != m_currentAddress) {
-            //save last region
-            FlashRegion lastRegion
-                    = {m_sectionStartAddress, m_currentAddress - m_sectionStartAddress, m_sectionCRC};
-            m_regionList.append(lastRegion);
-            m_sectionStartAddress = recordAddress;
-            m_currentAddress = recordAddress;
-            m_sectionCRC = 0;
-        }
-        int dataLen = m_transferBuffer[1];
-        m_sectionCRC = calculateCRC(&m_transferBuffer[5], dataLen, m_sectionCRC);
-        m_currentAddress += dataLen;
-    }
-        break;
-    case HEX_EOF: {
-        //save last region
-        FlashRegion lastRegion
-                = {m_sectionStartAddress, m_currentAddress - m_sectionStartAddress, m_sectionCRC};
-        m_regionList.append(lastRegion);
-    }
-        break;
-    }
-    return true;
-}
-
-uint8_t HidBootloader::hexCharToInt(char c)
-{
-    if (c >= '0' && c <= '9') {
-        return c - '0';
-    }
-    if (c >= 'A' && c <= 'F') {
-        return 10 + (c - 'A');
-    }
-    if (c >= 'a' && c <= 'f') {
-        return 10 + (c - 'a');
-    }
-    return 0;
 }
 
 bool HidBootloader::verify()
