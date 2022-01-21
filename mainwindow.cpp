@@ -16,8 +16,8 @@ MainWindow::MainWindow(QWidget *parent)
 {
     QSettings settings;
     ui->setupUi(this);
-    ui->vidEdit->setText(settings.value("last_vid", "0x4d63").toString());
-    ui->pidEdit->setText(settings.value("last_pid", "0x1234").toString());
+    ui->vidEdit->setText(settings.value("last_vid", "0x04d8").toString());
+    ui->pidEdit->setText(settings.value("last_pid", "0x003c").toString());
     ui->baudComboBox->setCurrentIndex(settings.value("last_baud", 0).toInt());
     ui->connectionTypeComboBox->setCurrentIndex(settings.value("last_connection_type", 0).toInt());
     ui->eraseBlockSizeComboBox->setCurrentText(
