@@ -3,6 +3,7 @@
 
 #include <QMainWindow>
 #include <QLabel>
+#include <QJsonArray>
 #include "bootloader.h"
 #include "workerthread.h"
 #include <memory>
@@ -30,12 +31,16 @@ private slots:
     void on_actionAbout_triggered();
     void on_fileNameEdit_textChanged(const QString &arg1);
 
+    void on_familyComboBox_currentIndexChanged(int index);
+
 private:
     QString fileName;
     QLabel *connectLabel;
     Ui::MainWindow *ui;
     std::unique_ptr<Bootloader> bootloader;
     std::unique_ptr<WorkerThread> worker;
+    void readDevices();
+    QJsonArray familiesArray;
 protected:
     virtual void closeEvent(QCloseEvent *event) override;
 };

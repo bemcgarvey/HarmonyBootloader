@@ -4,6 +4,8 @@
 #include <QFileDialog>
 #include <QCloseEvent>
 #include <QMessageBox>
+#include <QJsonDocument>
+#include <QJsonObject>
 #include "hidbootloader.h"
 #include "uartbootloader.h"
 #include "workerthread.h"
@@ -20,9 +22,12 @@ MainWindow::MainWindow(QWidget *parent)
     ui->pidEdit->setText(settings.value("last_pid", "0x003c").toString());
     ui->baudComboBox->setCurrentIndex(settings.value("last_baud", 0).toInt());
     ui->connectionTypeComboBox->setCurrentIndex(settings.value("last_connection_type", 0).toInt());
-    ui->eraseBlockSizeComboBox->setCurrentText(
+    readDevices();
+    ui->familyComboBox->setCurrentIndex(
+                settings.value("last_family_index", 0).toInt());
+    ui->eraseSizeEdit->setText(
                 settings.value("last_erase_block_size", "8192").toString());
-    ui->startAddressComboBox->setCurrentText(
+    ui->appStartEdit->setText(
                 settings.value("last_start_address", "0x402000").toString());
     std::unique_ptr<QFile> test(new QFile(settings.value("last_file", "").toString()));
     if (test->exists()) {
@@ -46,15 +51,17 @@ void MainWindow::on_connectionTypeComboBox_currentTextChanged(const QString &arg
         ui->vidEdit->setEnabled(true);
         ui->portComboBox->setEnabled(false);
         ui->baudComboBox->setEnabled(false);
-        ui->startAddressComboBox->setEnabled(false);
-        ui->eraseBlockSizeComboBox->setEnabled(false);
+        ui->appStartEdit->setEnabled(false);
+        ui->eraseSizeEdit->setEnabled(false);
+        ui->familyComboBox->setEnabled(false);
     } else if (arg1 == "UART") {
         ui->pidEdit->setEnabled(false);
         ui->vidEdit->setEnabled(false);
         ui->portComboBox->setEnabled(true);
         ui->baudComboBox->setEnabled(true);
-        ui->startAddressComboBox->setEnabled(true);
-        ui->eraseBlockSizeComboBox->setEnabled(true);
+        ui->appStartEdit->setEnabled(true);
+        ui->eraseSizeEdit->setEnabled(true);
+        ui->familyComboBox->setEnabled(true);
         QList<QSerialPortInfo> portList = QSerialPortInfo::availablePorts();
         ui->portComboBox->clear();
         for (auto&& i : portList) {
@@ -102,8 +109,9 @@ void MainWindow::closeEvent(QCloseEvent *event)
     settings.setValue("last_file", ui->fileNameEdit->text());
     settings.setValue("last_baud", ui->baudComboBox->currentIndex());
     settings.setValue("last_connection_type", ui->connectionTypeComboBox->currentIndex());
-    settings.setValue("last_erase_block_size", ui->eraseBlockSizeComboBox->currentText());
-    settings.setValue("last_start_address", ui->startAddressComboBox->currentText());
+    settings.setValue("last_erase_block_size", ui->eraseSizeEdit->text());
+    settings.setValue("last_start_address", ui->appStartEdit->text());
+    settings.setValue("last_family_index", ui->familyComboBox->currentIndex());
     event->accept();
 }
 
@@ -137,12 +145,12 @@ void MainWindow::on_connectButton_clicked()
     } else if (ui->connectionTypeComboBox->currentText() == "UART") {
         int baud = ui->baudComboBox->currentText().toInt();
         bool ok;
-        uint32_t startAddress = ui->startAddressComboBox->currentText().toUInt(&ok, 16);
+        uint32_t startAddress = ui->appStartEdit->text().toUInt(&ok, 16);
         if (!ok && ui->fileNameEdit->text().endsWith(".bin", Qt::CaseInsensitive)) {
             QMessageBox::critical(this, QApplication::applicationName(), "Invalid start address - Enter in hex");
             return;
         }
-        uint32_t eraseBlockSize = ui->eraseBlockSizeComboBox->currentText().toUInt(&ok, 10);
+        uint32_t eraseBlockSize = ui->eraseSizeEdit->text().toUInt(&ok, 10);
         if (!ok) {
             QMessageBox::critical(this, QApplication::applicationName(), "Invalid erase block size - Enter in decimal");
             return;
@@ -234,11 +242,34 @@ void MainWindow::on_fileNameEdit_textChanged(const QString &arg1)
 {
     if (ui->connectionTypeComboBox->currentText() == "UART") {
         if (arg1.endsWith(".hex", Qt::CaseInsensitive)) {
-            ui->startAddressComboBox->setEnabled(false);
             ui->statusbar->showMessage("Using hex file for flash start address", 3000);
-        } else {
-            ui->startAddressComboBox->setEnabled(true);
         }
+    }
+}
+
+void MainWindow::readDevices()
+{
+    QString val;
+    QFile file;
+    file.setFileName("devices.json");
+    file.open(QIODevice::ReadOnly | QIODevice::Text);
+    val = file.readAll();
+    file.close();
+    QJsonDocument d = QJsonDocument::fromJson(val.toUtf8());
+    QJsonObject jobj = d.object();
+    familiesArray = jobj["families"].toArray();
+    for (int i = 0; i < familiesArray.size(); ++i) {
+        ui->familyComboBox->addItem(familiesArray[i].toObject()["name"].toString());
+    }
+}
+
+
+void MainWindow::on_familyComboBox_currentIndexChanged(int index)
+{
+    ui->appStartEdit->setText(familiesArray[index].toObject()["app start address"].toString());
+    ui->eraseSizeEdit->setText(QString::number(familiesArray[index].toObject()["erase block size"].toInt()));
+    if (ui->fileNameEdit->text().endsWith(".hex", Qt::CaseInsensitive)) {
+        ui->statusbar->showMessage("Using hex file for flash start address", 3000);
     }
 }
 
