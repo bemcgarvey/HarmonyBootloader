@@ -8,7 +8,7 @@
 	{
 		"name":"ATSAMD5x/E5x",
 		"app start address":"0x2000",
-		"erase block size":4096
+		"erase block size":8192
 	},
 	{
 		"name":"ATSAME/S/V7x",
@@ -17,23 +17,23 @@
 	},
 	{
 		"name":"PIC32CM",
-		"app start address":"?????",
-		"erase block size":0
+		"app start address":"0x800",
+		"erase block size":256
 	},
 	{
 		"name":"PIC32MK",
-		"app start address":"?????",
-		"erase block size":0
+		"app start address":"0x1d000000",
+		"erase block size":4096
 	},
 	{
 		"name":"PIC32MX",
-		"app start address":"0x?????",
-		"erase block size":0
+		"app start address":"0x1d001000",
+		"erase block size":1024
 	},
 	{
 		"name":"PIC32MZ",
-		"app start address":"0x?????",
-		"erase block size":0
+		"app start address":"0x1d000000",
+		"erase block size":16384
 	}
 	]
 }
