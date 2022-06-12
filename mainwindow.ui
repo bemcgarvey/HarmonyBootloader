@@ -231,6 +231,43 @@
     <item>
      <layout class="QHBoxLayout" name="horizontalLayout_6">
       <item>
+       <widget class="QLabel" name="label_9">
+        <property name="text">
+         <string>Family</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QComboBox" name="familyComboBox">
+        <property name="enabled">
+         <bool>true</bool>
+        </property>
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <spacer name="horizontalSpacer_7">
+        <property name="orientation">
+         <enum>Qt::Horizontal</enum>
+        </property>
+        <property name="sizeHint" stdset="0">
+         <size>
+          <width>40</width>
+          <height>20</height>
+         </size>
+        </property>
+       </spacer>
+      </item>
+     </layout>
+    </item>
+    <item>
+     <layout class="QHBoxLayout" name="horizontalLayout_7">
+      <item>
        <widget class="QPushButton" name="connectButton">
         <property name="maximumSize">
          <size>
@@ -261,24 +298,17 @@
         <item>
          <layout class="QVBoxLayout" name="verticalLayout_4">
           <item>
-           <widget class="QLabel" name="label_9">
-            <property name="text">
-             <string>Family</string>
+           <spacer name="verticalSpacer_7">
+            <property name="orientation">
+             <enum>Qt::Vertical</enum>
             </property>
-           </widget>
-          </item>
-          <item alignment="Qt::AlignLeft">
-           <widget class="QComboBox" name="familyComboBox">
-            <property name="enabled">
-             <bool>false</bool>
+            <property name="sizeHint" stdset="0">
+             <size>
+              <width>20</width>
+              <height>40</height>
+             </size>
             </property>
-            <property name="sizePolicy">
-             <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
-              <horstretch>0</horstretch>
-              <verstretch>0</verstretch>
-             </sizepolicy>
-            </property>
-           </widget>
+           </spacer>
           </item>
           <item>
            <widget class="QLabel" name="label_7">
@@ -287,7 +317,7 @@
             </property>
            </widget>
           </item>
-          <item alignment="Qt::AlignLeft">
+          <item>
            <widget class="QLineEdit" name="appStartEdit">
             <property name="enabled">
              <bool>false</bool>
@@ -473,7 +503,7 @@
      <x>0</x>
      <y>0</y>
      <width>580</width>
-     <height>21</height>
+     <height>22</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuFile">

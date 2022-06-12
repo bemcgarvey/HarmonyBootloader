@@ -53,7 +53,6 @@ void MainWindow::on_connectionTypeComboBox_currentTextChanged(const QString &arg
         ui->baudComboBox->setEnabled(false);
         ui->appStartEdit->setEnabled(false);
         ui->eraseSizeEdit->setEnabled(false);
-        ui->familyComboBox->setEnabled(false);
     } else if (arg1 == "UART") {
         ui->pidEdit->setEnabled(false);
         ui->vidEdit->setEnabled(false);
@@ -61,7 +60,6 @@ void MainWindow::on_connectionTypeComboBox_currentTextChanged(const QString &arg
         ui->baudComboBox->setEnabled(true);
         ui->appStartEdit->setEnabled(true);
         ui->eraseSizeEdit->setEnabled(true);
-        ui->familyComboBox->setEnabled(true);
         QList<QSerialPortInfo> portList = QSerialPortInfo::availablePorts();
         ui->portComboBox->clear();
         for (auto&& i : portList) {
@@ -204,6 +202,12 @@ void MainWindow::onBootloaderFinished(bool success)
 
 void MainWindow::on_programButton_clicked()
 {
+    if (ui->familyComboBox->currentText() == "") {
+        QMessageBox::critical(this, QApplication::applicationName(),
+                              "Please select a device family");
+        return;
+    }
+    bootloader->setFamily(ui->familyComboBox->currentData().toInt());
     ui->programButton->setEnabled(false);
     if (!bootloader->setFile(ui->fileNameEdit->text())) {
         QMessageBox::critical(this, QApplication::applicationName()
@@ -258,8 +262,18 @@ void MainWindow::readDevices()
     QJsonDocument d = QJsonDocument::fromJson(val.toUtf8());
     QJsonObject jobj = d.object();
     familiesArray = jobj["families"].toArray();
+    int baseFamily;
     for (int i = 0; i < familiesArray.size(); ++i) {
-        ui->familyComboBox->addItem(familiesArray[i].toObject()["name"].toString());
+        if (familiesArray[i].toObject()["base family"].toString() == "ARM") {
+            baseFamily = Bootloader::ARM;
+        }
+        else if (familiesArray[i].toObject()["base family"].toString() == "PIC32") {
+            baseFamily = Bootloader::PIC32;
+        } else {
+            baseFamily = Bootloader::OTHER;
+        }
+        ui->familyComboBox->addItem(familiesArray[i].toObject()["name"].toString(),
+                baseFamily);
     }
 }
 

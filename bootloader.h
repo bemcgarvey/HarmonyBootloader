@@ -17,8 +17,11 @@ public:
     virtual bool verify() = 0;
     virtual void abort();
     bool isAborted() {return m_abort;}
+    enum {PIC32 = 0, ARM = 1, OTHER = 2};
+    void setFamily(int family) {m_family = family;}
 protected:
     bool m_abort;
+    int m_family;
 signals:
     void finished(bool success);
     void progress(int p);

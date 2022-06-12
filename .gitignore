@@ -28,6 +28,7 @@ ui_*.h
 *.jsc
 Makefile*
 *build-*
+*_resource.rc
 
 # Qt unit tests
 target_wrapper.*
@@ -43,3 +44,6 @@ target_wrapper.*
 CMakeLists.txt.user*
 *.exe
 *appdatalocaltemp*
+**/.qtc_clangd
+**/release
+**/debug

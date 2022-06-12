@@ -147,6 +147,9 @@ bool HidBootloader::programFlash()
 uint16_t HidBootloader::readCRC(uint32_t address, uint32_t len)
 {
     m_transferBuffer[0] = READ_CRC;
+    if (m_family == PIC32) {
+        address += 0x80000000;  //Adjust for virtual vs physical address
+    }
     *(uint32_t *)&m_transferBuffer[1] = address;
     *(uint32_t *)&m_transferBuffer[5] = len;
     m_bufferLen = 9;

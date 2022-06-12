@@ -3,37 +3,44 @@
 	{
 		"name":"ATSAMD21",
 		"app start address":"0x800",
-		"erase block size":256
+		"erase block size":256,
+		"base family":"ARM"
 	},
 	{
 		"name":"ATSAMD5x/E5x",
 		"app start address":"0x2000",
-		"erase block size":8192
+		"erase block size":8192,
+		"base family":"ARM"
 	},
 	{
 		"name":"ATSAME/S/V7x",
 		"app start address":"0x402000",
-		"erase block size":8192
+		"erase block size":8192,
+		"base family":"ARM"
 	},
 	{
 		"name":"PIC32CM",
 		"app start address":"0x800",
-		"erase block size":256
+		"erase block size":256,
+		"base family":"ARM"
 	},
 	{
 		"name":"PIC32MK",
-		"app start address":"0x1d000000",
-		"erase block size":4096
+		"app start address":"0x9d000000",
+		"erase block size":4096,
+		"base family":"PIC32"
 	},
 	{
 		"name":"PIC32MX",
-		"app start address":"0x1d001000",
-		"erase block size":1024
+		"app start address":"0x9d001000",
+		"erase block size":1024,
+		"base family":"PIC32"
 	},
 	{
 		"name":"PIC32MZ",
-		"app start address":"0x1d000000",
-		"erase block size":16384
+		"app start address":"0x9d000000",
+		"erase block size":16384,
+		"base family":"PIC32"
 	}
 	]
 }
